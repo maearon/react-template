@@ -3,22 +3,50 @@ import { useState } from 'react';
 export default function ValueStepper() {
   const [unit, setUnit] = useState<'%' | 'px'>('%');
   const [value, setValue] = useState<number>(1);
+  const [rawInput, setRawInput] = useState<string>('1');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let input = e.target.value;
-    let parsed = parseFloat(input);
+    // Allows the user to type numbers, . and ,
+    setRawInput(e.target.value);
+  };
+
+  const handleBlur = () => {
+    let input = rawInput.trim();
+
+    // Move , -> .
+    input = input.replace(',', '.');
+
+    // Remove all invalid characters except numbers and the first period
+    const validInput = input.match(/^(\d+)?(\.\d*)?/)?.[0] ?? '';
+
+    let parsed = parseFloat(validInput);
+    if (isNaN(parsed)) parsed = 0;
+
+    if (parsed < 0) parsed = 0;
+    if (unit === '%' && parsed > 100) parsed = 100;
+
     setValue(parsed);
+    setRawInput(parsed.toString());
   };
 
   const increment = () => {
+    if (unit === '%' && value >= 100) return;
+    const newVal = parseFloat((value + 1).toFixed(2));
+    setValue(newVal);
+    setRawInput(newVal.toString());
   };
 
   const decrement = () => {
+    if (value <= 0) return;
+    const newVal = parseFloat((value - 1).toFixed(2));
+    setValue(newVal);
+    setRawInput(newVal.toString());
   };
 
   const handleUnitChange = (newUnit: '%' | 'px') => {
     if (newUnit === '%' && value > 100) {
       setValue(100);
+      setRawInput('100');
     }
     setUnit(newUnit);
   };
@@ -45,12 +73,9 @@ export default function ValueStepper() {
         </button>
         <input
           className="border p-1 w-24 text-center"
-          value={value}
+          value={rawInput}
           onChange={handleChange}
-          onBlur={() => {
-            if (unit === '%' && value > 100) setValue(100);
-            if (value < 0) setValue(0);
-          }}
+          onBlur={handleBlur}
         />
         <button onClick={increment} disabled={unit === '%' && value >= 100}>
           +
