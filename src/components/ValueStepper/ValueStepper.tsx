@@ -19,8 +19,8 @@ const schema = z.object({
 export default function ValueStepper() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [unit, setUnit] = useState<'%' | 'px'>('%');
-  const [value, setValue] = useState<number>(1);
-  const [rawInput, setRawInput] = useState<string>('1');
+  const [value, setValue] = useState<number>(0);
+  const [rawInput, setRawInput] = useState<string>('0');
   const [error, setError] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
 
