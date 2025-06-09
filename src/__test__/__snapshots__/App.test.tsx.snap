@@ -8,7 +8,38 @@ exports[`toUpperCase 1`] = `
     <div
       class="w-96 bg-neutral-800 p-4 rounded-lg"
     >
-      // Your component go here
+      <div
+        class="p-4 flex flex-col items-start gap-2"
+      >
+        <div
+          class="flex gap-2"
+        >
+          <button
+            class="px-3 py-1 border rounded bg-blue-500 text-white"
+          >
+            %
+          </button>
+          <button
+            class="px-3 py-1 border rounded bg-white text-black"
+          >
+            px
+          </button>
+        </div>
+        <div
+          class="flex gap-2 items-center"
+        >
+          <button>
+            −
+          </button>
+          <input
+            class="border p-1 w-24 text-center"
+            value="1"
+          />
+          <button>
+            +
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </DocumentFragment>

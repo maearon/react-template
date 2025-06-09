@@ -4,6 +4,8 @@ import { defineConfig } from "vite";
 export default defineConfig({
   test: {
     environment: 'jsdom',
-    include: ['**/*.test.tsx'],
-  }
+    include: ['src/**/*.test.tsx'],
+    globals: true,
+    setupFiles: './vitest.setup.ts',
+  },
 })
