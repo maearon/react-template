@@ -14,13 +14,12 @@ export default function ValueStepper() {
   const handleBlur = () => {
     let input = rawInput.trim();
 
-    // Move , -> .
-    input = input.replace(',', '.');
+    // Find all strings containing numbers, periods, commas
+    const numbers = input.match(/[\d.,]+/g);
+    const lastNumber = numbers ? numbers[numbers.length - 1] : '';
+    const normalized = lastNumber.replace(',', '.');
 
-    // Remove all invalid characters except numbers and the first period
-    const validInput = input.match(/^(\d+)?(\.\d*)?/)?.[0] ?? '';
-
-    let parsed = parseFloat(validInput);
+    let parsed = parseFloat(normalized);
     if (isNaN(parsed)) parsed = 0;
 
     if (parsed < 0) parsed = 0;
