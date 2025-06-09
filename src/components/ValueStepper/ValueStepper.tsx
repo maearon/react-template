@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { z } from 'zod';
 import { cn } from '../../lib/utils';
+import { Minus, Plus } from 'lucide-react';
 
 const schema = z.object({
   value: z.number().min(0, "Value must be ≥ 0"),
@@ -16,10 +17,12 @@ const schema = z.object({
 });
 
 export default function ValueStepper() {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [unit, setUnit] = useState<'%' | 'px'>('%');
   const [value, setValue] = useState<number>(1);
   const [rawInput, setRawInput] = useState<string>('1');
   const [error, setError] = useState<string | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const validate = (val: number, unit: '%' | 'px') => {
     const result = schema.safeParse({ value: val, unit });
@@ -78,32 +81,75 @@ export default function ValueStepper() {
   };
 
   return (
-    <div className="p-4 flex flex-col items-start gap-2">
-      <div className="flex gap-2">
-        <button
-          className={cn('px-3 py-1 border rounded', unit === '%' ? 'bg-blue-500 text-white' : 'bg-white text-black')}
-          onClick={() => handleUnitChange('%')}
-        >
-          %
-        </button>
-        <button
-          className={cn('px-3 py-1 border rounded', unit === 'px' ? 'bg-blue-500 text-white' : 'bg-white text-black')}
-          onClick={() => handleUnitChange('px')}
-        >
-          px
-        </button>
+    <div className="space-y-4 text-sm font-medium">
+      {/* Unit Row */}
+      <div className="flex items-center space-x-4">
+        <label className="w-12 text-neutral-400">Unit</label>
+        <div className="flex-1 flex justify-center">
+          <div className="grid grid-cols-2 gap-2 w-[160px]">
+            {(['%', 'px'] as const).map((u) => (
+              <button
+                key={u}
+                onClick={() => handleUnitChange(u)}
+                className={cn(
+                  'h-8 flex items-center justify-center rounded border text-sm w-full',
+                  unit === u
+                    ? 'bg-neutral-700 border-neutral-500 text-white'
+                    : 'bg-neutral-800 border-neutral-700 text-neutral-400 hover:border-neutral-500'
+                )}
+              >
+                {u}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-      <div className="flex gap-2 items-center">
-        <button onClick={decrement} disabled={value <= 0}>−</button>
-        <input
-          className="border p-1 w-24 text-center"
-          value={rawInput}
-          onChange={handleChange}
-          onBlur={handleBlur}
-        />
-        <button onClick={increment} disabled={unit === '%' && value >= 100}>+</button>
+
+      {/* Value Row */}
+      <div className="flex items-center space-x-4 relative">
+        <label className="w-12 text-neutral-400">Value</label>
+        <div className="flex-1 flex justify-center">
+          <div className="flex items-center w-[160px]">
+            <button
+              onClick={decrement}
+              className="w-8 h-8 flex items-center justify-center rounded border border-neutral-600 hover:border-neutral-400"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+
+            <input
+              ref={inputRef}
+              value={rawInput}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              onFocus={() => setShowTooltip(true)}
+              onBlurCapture={() => setShowTooltip(false)}
+              className={cn(
+                'mx-2 w-20 px-2 py-1 text-sm rounded border text-white bg-neutral-900 text-center',
+                error ? 'border-red-500' : 'border-neutral-600',
+                'focus:outline-none focus:ring-1 focus:ring-blue-500'
+              )}
+              type="text"
+              inputMode="decimal"
+            />
+
+            <button
+              onClick={increment}
+              disabled={unit === '%' && value >= 100}
+              className="w-8 h-8 flex items-center justify-center rounded border border-neutral-600 hover:border-neutral-400"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Tooltip */}
+        {showTooltip && error && (
+          <div className="absolute -bottom-6 left-[60px] text-xs text-red-400 bg-neutral-800 px-2 py-1 rounded shadow">
+            {error}
+          </div>
+        )}
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }
