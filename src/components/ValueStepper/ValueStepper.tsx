@@ -1,92 +1,109 @@
 import { useState } from 'react';
+import { z } from 'zod';
 import { cn } from '../../lib/utils';
+
+const schema = z.object({
+  value: z.number().min(0, "Value must be ≥ 0"),
+  unit: z.enum(['%', 'px']),
+}).superRefine(({ value, unit }, ctx) => {
+  if (unit === '%' && value > 100) {
+    ctx.addIssue({
+      path: ['value'],
+      code: z.ZodIssueCode.custom,
+      message: "Value must be ≤ 100 for %",
+    });
+  }
+});
 
 export default function ValueStepper() {
   const [unit, setUnit] = useState<'%' | 'px'>('%');
   const [value, setValue] = useState<number>(1);
   const [rawInput, setRawInput] = useState<string>('1');
+  const [error, setError] = useState<string | null>(null);
+
+  const validate = (val: number, unit: '%' | 'px') => {
+    const result = schema.safeParse({ value: val, unit });
+    if (!result.success) {
+      const msg = result.error.formErrors.fieldErrors.value?.[0] ?? "Invalid input";
+      setError(msg);
+      return false;
+    }
+    setError(null);
+    return true;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Allows the user to type numbers, . and ,
     setRawInput(e.target.value);
   };
 
   const handleBlur = () => {
-    let input = rawInput.trim();
+    const input = rawInput.trim().match(/[\d.,]+/g)?.pop() ?? '';
+    const parsed = parseFloat(input.replace(',', '.'));
 
-    // Find all strings containing numbers, periods, commas
-    const numbers = input.match(/[\d.,]+/g);
-    const lastNumber = numbers ? numbers[numbers.length - 1] : '';
-    const normalized = lastNumber.replace(',', '.');
+    if (isNaN(parsed)) {
+      setValue(0);
+      setRawInput('0');
+      setError("Invalid number");
+      return;
+    }
 
-    let parsed = parseFloat(normalized);
-    if (isNaN(parsed)) parsed = 0;
+    const isValid = validate(parsed, unit);
+    const finalValue = unit === '%' && parsed > 100 ? 100 : parsed < 0 ? 0 : parsed;
 
-    if (parsed < 0) parsed = 0;
-    if (unit === '%' && parsed > 100) parsed = 100;
-
-    setValue(parsed);
-    setRawInput(parsed.toString());
+    setValue(finalValue);
+    setRawInput(finalValue.toString());
+    if (isValid) setError(null);
   };
 
   const increment = () => {
-    if (unit === '%' && value >= 100) return;
     const newVal = parseFloat((value + 1).toFixed(2));
-    setValue(newVal);
-    setRawInput(newVal.toString());
+    if (validate(newVal, unit)) {
+      setValue(newVal);
+      setRawInput(newVal.toString());
+    }
   };
 
   const decrement = () => {
-    if (value <= 0) return;
     const newVal = parseFloat((value - 1).toFixed(2));
-    setValue(newVal);
-    setRawInput(newVal.toString());
+    if (newVal < 0) return;
+    if (validate(newVal, unit)) {
+      setValue(newVal);
+      setRawInput(newVal.toString());
+    }
   };
 
   const handleUnitChange = (newUnit: '%' | 'px') => {
-    if (newUnit === '%' && value > 100) {
-      setValue(100);
-      setRawInput('100');
-    }
     setUnit(newUnit);
+    validate(value, newUnit);
   };
 
   return (
     <div className="p-4 flex flex-col items-start gap-2">
       <div className="flex gap-2">
         <button
-          className={cn(
-            'px-3 py-1 border rounded',
-            unit === '%' ? 'bg-blue-500 text-white' : 'bg-white text-black'
-          )}
+          className={cn('px-3 py-1 border rounded', unit === '%' ? 'bg-blue-500 text-white' : 'bg-white text-black')}
           onClick={() => handleUnitChange('%')}
         >
           %
         </button>
         <button
-          className={cn(
-            'px-3 py-1 border rounded',
-            unit === 'px' ? 'bg-blue-500 text-white' : 'bg-white text-black'
-          )}
+          className={cn('px-3 py-1 border rounded', unit === 'px' ? 'bg-blue-500 text-white' : 'bg-white text-black')}
           onClick={() => handleUnitChange('px')}
         >
           px
         </button>
       </div>
       <div className="flex gap-2 items-center">
-        <button onClick={decrement} disabled={value <= 0 || (unit === '%' && value <= 0)}>
-          −
-        </button>
+        <button onClick={decrement} disabled={value <= 0}>−</button>
         <input
           className="border p-1 w-24 text-center"
           value={rawInput}
           onChange={handleChange}
           onBlur={handleBlur}
         />
-        <button onClick={increment} disabled={unit === '%' && value >= 100}>
-          +
-        </button>
+        <button onClick={increment} disabled={unit === '%' && value >= 100}>+</button>
       </div>
+      {error && <p className="text-sm text-red-500">{error}</p>}
     </div>
   );
 }
