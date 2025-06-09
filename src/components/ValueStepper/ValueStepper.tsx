@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { twMerge } from 'tailwind-merge';
-import clsx from 'clsx';
+import { cn } from '../../lib/utils';
 
 export default function ValueStepper() {
   const [unit, setUnit] = useState<'%' | 'px'>('%');
@@ -57,24 +56,18 @@ export default function ValueStepper() {
     <div className="p-4 flex flex-col items-start gap-2">
       <div className="flex gap-2">
         <button
-          className={twMerge(
+          className={cn(
             'px-3 py-1 border rounded',
-            clsx({
-              'bg-blue-500 text-white': unit === '%',
-              'bg-white text-black': unit !== '%',
-            })
+            unit === '%' ? 'bg-blue-500 text-white' : 'bg-white text-black'
           )}
           onClick={() => handleUnitChange('%')}
         >
           %
         </button>
         <button
-          className={twMerge(
+          className={cn(
             'px-3 py-1 border rounded',
-            clsx({
-              'bg-blue-500 text-white': unit === 'px',
-              'bg-white text-black': unit !== 'px',
-            })
+            unit === 'px' ? 'bg-blue-500 text-white' : 'bg-white text-black'
           )}
           onClick={() => handleUnitChange('px')}
         >
